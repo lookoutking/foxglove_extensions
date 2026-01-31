@@ -221,6 +221,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
     context,
     panelState.behaviorTreeXmlTopic,
     panelState.behaviorTreeLogsTopic,
+    panelState.debug,
     validBehaviorTreeXmlTopics,
     validBehaviorTreeLogsTopics,
   ]);
