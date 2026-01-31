@@ -1,3 +1,8 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const config = {
   "stories": [
     "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"
@@ -15,7 +20,7 @@ const config = {
     // Add path alias resolution for @/* paths
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, '../src'),
+      '@': path.resolve(__dirname, '../src'),
     };
 
     // Ensure Storybook watches src files for hot reloading
