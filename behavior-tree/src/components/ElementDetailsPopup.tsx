@@ -18,8 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UUID_KEY } from "@/constants";
-import { TBehaviorTree, PortDirection } from "@/types";
-import { getNodeColor } from "@/utils/nodeStyles";
+import { TBehaviorTree, NodeStatus, PortDirection } from "@/types";
+import { getNodeColor, getNodeStatusStyle } from "@/utils/nodeStyles";
+import { useGraphContext } from "./GraphContextProvider";
 
 type SelectedElement = {
   id: string;
@@ -42,6 +43,10 @@ export function ElementDetailsPopup({ element, behaviorTree, onClose }: ElementD
   const uuid = element.attributes[UUID_KEY];
 
   const nodeColorScheme = getNodeColor(element.type);
+
+  const { nodeStatusMap } = useGraphContext();
+  const nodeStatus = nodeStatusMap.get(element.name);
+  const statusStyle = nodeStatus != null ? getNodeStatusStyle(nodeStatus) : null;
 
   // Helper function to get port direction badge
   const getPortBadge = (attributeKey: string) => {
@@ -109,6 +114,17 @@ export function ElementDetailsPopup({ element, behaviorTree, onClose }: ElementD
               {model && (
                 <div className="text-xs text-muted-foreground capitalize mt-1">
                   {model.type} node
+                </div>
+              )}
+              {statusStyle && nodeStatus !== NodeStatus.IDLE && (
+                <div className="flex items-center gap-1 mt-1">
+                  <span
+                    className="inline-block w-2 h-2 rounded-full"
+                    style={{ backgroundColor: statusStyle.borderColor }}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Status: {statusStyle.statusLabel}
+                  </span>
                 </div>
               )}
             </div>

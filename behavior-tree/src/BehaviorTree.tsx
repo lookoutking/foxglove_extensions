@@ -15,6 +15,7 @@ import { ReactElement, useMemo } from "react";
 
 import { Graph } from "./components/Graph";
 import { GraphContextProvider } from "./components/GraphContextProvider";
+import { LogProcessor } from "./components/LogProcessor";
 import { parseBehaviorTreeXML } from "./parse";
 import { BehaviorTreeLog, TBehaviorTree } from "./types";
 
@@ -25,7 +26,7 @@ interface BehaviorTreeProps {
   logs?: BehaviorTreeLog;
 }
 
-export function BehaviorTree({ xml }: BehaviorTreeProps): ReactElement {
+export function BehaviorTree({ xml, logs }: BehaviorTreeProps): ReactElement {
   const behaviorTree: TBehaviorTree | null = useMemo(() => {
     if (xml) {
       try {
@@ -40,6 +41,7 @@ export function BehaviorTree({ xml }: BehaviorTreeProps): ReactElement {
 
   return (
     <GraphContextProvider>
+      <LogProcessor logs={logs} />
       <div className="h-full w-full relative flex">
         <div className="flex-1 relative">
           <Graph behaviorTree={behaviorTree} />

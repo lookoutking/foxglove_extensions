@@ -27,10 +27,10 @@ import { ReactElement, useMemo, useCallback, useEffect, useRef } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { generateDag, DagNode } from "../dag";
-import { TBehaviorTree } from "../types";
+import { NodeStatus, TBehaviorTree } from "../types";
 import { ElementDetailsPopup } from "./ElementDetailsPopup";
 import { useGraphContext, SelectedElement } from "./GraphContextProvider";
-import { getNodeColor } from "../utils/nodeStyles";
+import { getNodeColor, getNodeStatusStyle } from "../utils/nodeStyles";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 
@@ -42,7 +42,7 @@ interface GraphProps {
 
 // Custom node component for behavior tree nodes
 function BehaviorTreeNode({ data }: { data: DagNode }) {
-  const { selectedElement, matchedNodeIds } = useGraphContext();
+  const { selectedElement, matchedNodeIds, nodeStatusMap } = useGraphContext();
   const isSelected = selectedElement?.id === data.id;
   const isMatched = matchedNodeIds.has(data.id);
   const nodeColorScheme = getNodeColor(data.model);
@@ -51,14 +51,19 @@ function BehaviorTreeNode({ data }: { data: DagNode }) {
     : nodeColorScheme.nodeStyles.default;
   const uuid = data.attributes?.[UUID_KEY] || "UNKNOWN_UUID";
 
+  const nodeStatus = nodeStatusMap.get(data.name);
+  const statusStyle = nodeStatus != null ? getNodeStatusStyle(nodeStatus) : null;
+  const hasActiveStatus = statusStyle != null && nodeStatus !== NodeStatus.IDLE;
+
   return (
     <div
       className={`px-3 py-2 shadow-sm border-2 rounded-lg min-w-24 text-center transition-all duration-200 ${nodeClassName} ${
         isSelected ? "transform scale-105" : "hover:shadow-md"
-      } ${isMatched && !isSelected ? "opacity-100" : ""} ${matchedNodeIds.size > 0 && !isMatched ? "opacity-30" : ""}`}
+      } ${isMatched && !isSelected ? "opacity-100" : ""} ${matchedNodeIds.size > 0 && !isMatched ? "opacity-30" : ""} ${hasActiveStatus && !isSelected ? statusStyle.ringClass : ""} ${hasActiveStatus ? statusStyle.animationClass : ""}`}
       style={{
         width: data.width,
         height: data.height,
+        ...(hasActiveStatus ? { borderColor: statusStyle.borderColor } : {}),
       }}
     >
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
@@ -70,6 +75,14 @@ function BehaviorTreeNode({ data }: { data: DagNode }) {
           {uuid}
         </Badge>
         <span className="truncate">{data.name}</span>
+        {hasActiveStatus && (
+          <Badge
+            className="ml-[4px] text-[9px] px-1"
+            style={{ backgroundColor: statusStyle.borderColor, color: "white" }}
+          >
+            {statusStyle.statusLabel}
+          </Badge>
+        )}
       </div>
       <Handle type="source" position={Position.Bottom} className="w-2 h-2" />
     </div>
@@ -118,6 +131,7 @@ export function Graph({ behaviorTree }: GraphProps): ReactElement {
     setSearchQuery,
     setMatchedNodeIds,
     matchedNodeIds,
+    nodeStatusMap,
   } = useGraphContext();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -143,13 +157,13 @@ export function Graph({ behaviorTree }: GraphProps): ReactElement {
     }
   }, [behaviorTree]);
 
-  // Convert DAG to React Flow nodes and edges
-  const { nodes, edges } = useMemo(() => {
+  // Convert DAG to React Flow nodes
+  const nodes = useMemo(() => {
     if (!dagGraph) {
-      return { nodes: [], edges: [] };
+      return [];
     }
 
-    const reactFlowNodes: Node[] = dagGraph.nodes.map((dagNode) => ({
+    return dagGraph.nodes.map((dagNode) => ({
       id: dagNode.id,
       type: "behaviorTree",
       position: { x: dagNode.x ?? 0, y: dagNode.y ?? 0 },
@@ -157,18 +171,36 @@ export function Graph({ behaviorTree }: GraphProps): ReactElement {
       draggable: false,
       style: {},
     }));
-
-    const reactFlowEdges: Edge[] = dagGraph.edges.map((dagEdge, index) => ({
-      id: `${dagEdge.source}-${dagEdge.target}-${index}`,
-      source: dagEdge.source,
-      target: dagEdge.target,
-      type: "smoothstep",
-      style: { stroke: "#6b7280", strokeWidth: 2 },
-      animated: false,
-    }));
-
-    return { nodes: reactFlowNodes, edges: reactFlowEdges };
   }, [dagGraph]);
+
+  // Convert DAG to React Flow edges (depends on nodeStatusMap for status-based coloring)
+  const edges = useMemo(() => {
+    if (!dagGraph) {
+      return [];
+    }
+
+    const nodeIdToName = new Map<string, string>();
+    dagGraph.nodes.forEach((node) => nodeIdToName.set(node.id, node.name));
+
+    return dagGraph.edges.map((dagEdge, index) => {
+      const targetName = nodeIdToName.get(dagEdge.target);
+      const targetStatus = targetName ? nodeStatusMap.get(targetName) : undefined;
+      const statusStyle = targetStatus != null ? getNodeStatusStyle(targetStatus) : null;
+      const hasActiveStatus = statusStyle != null && targetStatus !== NodeStatus.IDLE;
+
+      return {
+        id: `${dagEdge.source}-${dagEdge.target}-${index}`,
+        source: dagEdge.source,
+        target: dagEdge.target,
+        type: "smoothstep",
+        style: {
+          stroke: hasActiveStatus ? statusStyle.edgeStroke : "#6b7280",
+          strokeWidth: hasActiveStatus ? 3 : 2,
+        },
+        animated: hasActiveStatus ? statusStyle.edgeAnimated : false,
+      };
+    });
+  }, [dagGraph, nodeStatusMap]);
 
   // Update matched nodes when search query changes
   useEffect(() => {
