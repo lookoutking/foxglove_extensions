@@ -13,6 +13,7 @@
 // limitations under the License.
 import { ReactElement, useMemo } from "react";
 
+import { DebugOverlay } from "./components/DebugOverlay";
 import { Graph } from "./components/Graph";
 import { GraphContextProvider } from "./components/GraphContextProvider";
 import { LogProcessor } from "./components/LogProcessor";
@@ -24,9 +25,11 @@ import { RightSidebar } from "@/components/RightSidebar";
 interface BehaviorTreeProps {
   xml?: string;
   logs?: BehaviorTreeLog;
+  debug?: boolean;
+  rawLogMessage?: unknown;
 }
 
-export function BehaviorTree({ xml, logs }: BehaviorTreeProps): ReactElement {
+export function BehaviorTree({ xml, logs, debug, rawLogMessage }: BehaviorTreeProps): ReactElement {
   const behaviorTree: TBehaviorTree | null = useMemo(() => {
     if (xml) {
       try {
@@ -45,6 +48,7 @@ export function BehaviorTree({ xml, logs }: BehaviorTreeProps): ReactElement {
       <div className="h-full w-full relative flex">
         <div className="flex-1 relative">
           <Graph behaviorTree={behaviorTree} />
+          {debug && <DebugOverlay logs={logs} rawMessage={rawLogMessage} />}
         </div>
 
         <RightSidebar behaviorTree={behaviorTree} xml={xml} />
