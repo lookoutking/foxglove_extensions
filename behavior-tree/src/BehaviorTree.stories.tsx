@@ -45,7 +45,7 @@ const meta = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div style={{ width: "1500px", height: "1000px", border: "1px solid #e5e7eb" }}>
+      <div className="dark" style={{ width: "1500px", height: "1000px", background: "#0a0a0a" }}>
         <Story />
       </div>
     ),
