@@ -23,6 +23,7 @@ type PanelState = {
   behaviorTreeXmlTopic?: string;
   behaviorTreeLogsTopic?: string;
   debug?: boolean;
+  showPortsOnNodes?: boolean;
 };
 
 const BEHAVIOR_TREE_XML_TOPIC_SCHEMA = "std_msgs/msg/String";
@@ -188,6 +189,10 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
         const newDebug = action.payload.value as boolean;
         setPanelState((prev) => ({ ...prev, debug: newDebug }));
       }
+      if (action.action === "update" && path === "display.showPortsOnNodes") {
+        const newValue = action.payload.value as boolean;
+        setPanelState((prev) => ({ ...prev, showPortsOnNodes: newValue }));
+      }
     };
 
     context.updatePanelSettingsEditor({
@@ -215,6 +220,16 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
             },
           },
         },
+        display: {
+          label: "Display",
+          fields: {
+            showPortsOnNodes: {
+              label: "Show Ports on Nodes",
+              input: "boolean",
+              value: panelState.showPortsOnNodes ?? false,
+            },
+          },
+        },
       },
     });
   }, [
@@ -222,6 +237,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
     panelState.behaviorTreeXmlTopic,
     panelState.behaviorTreeLogsTopic,
     panelState.debug,
+    panelState.showPortsOnNodes,
     validBehaviorTreeXmlTopics,
     validBehaviorTreeLogsTopics,
   ]);
@@ -244,6 +260,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
         logs={behaviorTreeLogs}
         debug={panelState.debug}
         rawLogMessage={rawLogMessage}
+        showPorts={panelState.showPortsOnNodes}
       />
     </div>
   );

@@ -27,9 +27,10 @@ interface BehaviorTreeProps {
   logs?: BehaviorTreeLog;
   debug?: boolean;
   rawLogMessage?: unknown;
+  showPorts?: boolean;
 }
 
-export function BehaviorTree({ xml, logs, debug, rawLogMessage }: BehaviorTreeProps): ReactElement {
+export function BehaviorTree({ xml, logs, debug, rawLogMessage, showPorts }: BehaviorTreeProps): ReactElement {
   const behaviorTree: TBehaviorTree | null = useMemo(() => {
     if (xml) {
       try {
@@ -47,7 +48,7 @@ export function BehaviorTree({ xml, logs, debug, rawLogMessage }: BehaviorTreePr
       <LogProcessor logs={logs} />
       <div className="h-full w-full relative flex">
         <div className="flex-1 relative">
-          <Graph behaviorTree={behaviorTree} />
+          <Graph behaviorTree={behaviorTree} showPorts={showPorts} />
           {debug && <DebugOverlay logs={logs} rawMessage={rawLogMessage} />}
         </div>
 

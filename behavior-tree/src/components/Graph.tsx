@@ -27,7 +27,7 @@ import { ReactElement, useMemo, useCallback, useEffect, useRef } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { generateDag, DagNode } from "../dag";
-import { NodeStatus, TBehaviorTree } from "../types";
+import { NodeStatus, TBehaviorTree, PortDirection } from "../types";
 import { ElementDetailsPopup } from "./ElementDetailsPopup";
 import { useGraphContext, SelectedElement } from "./GraphContextProvider";
 import { getNodeColor, getNodeStatusStyle } from "../utils/nodeStyles";
@@ -38,6 +38,33 @@ import { UUID_KEY } from "@/constants";
 
 interface GraphProps {
   behaviorTree: TBehaviorTree | null;
+  showPorts?: boolean;
+}
+
+function getPortDirectionLabel(direction: PortDirection): string {
+  switch (direction) {
+    case PortDirection.INPUT:
+      return "IN";
+    case PortDirection.OUTPUT:
+      return "OUT";
+    case PortDirection.INOUT:
+      return "IO";
+    default:
+      return "IN";
+  }
+}
+
+function getPortDirectionColor(direction: PortDirection): string {
+  switch (direction) {
+    case PortDirection.INPUT:
+      return "text-sky-400";
+    case PortDirection.OUTPUT:
+      return "text-amber-400";
+    case PortDirection.INOUT:
+      return "text-violet-400";
+    default:
+      return "text-sky-400";
+  }
 }
 
 // Custom node component for behavior tree nodes
@@ -84,6 +111,25 @@ function BehaviorTreeNode({ data }: { data: DagNode }) {
           </Badge>
         )}
       </div>
+      {data.resolvedPorts && data.resolvedPorts.length > 0 && (
+        <div className="w-full mt-1 pt-1 border-t border-gray-300 dark:border-gray-600 text-left">
+          {data.resolvedPorts.map((port) => (
+            <div key={port.name} className="flex items-center text-[10px] leading-tight">
+              <span
+                className={`${getPortDirectionColor(port.direction)} font-semibold flex-shrink-0 w-7`}
+              >
+                {getPortDirectionLabel(port.direction)}:
+              </span>
+              <span className="text-gray-700 dark:text-gray-300 truncate">{port.name}</span>
+              {port.value != null && (
+                <span className="text-gray-500 dark:text-gray-400 font-mono truncate ml-auto text-right max-w-[40%]">
+                  {port.value}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
       <Handle type="source" position={Position.Bottom} className="w-2 h-2" />
     </div>
   );
@@ -122,7 +168,7 @@ function ViewportCenteringHandler({
   return null; // This component doesn't render anything
 }
 
-export function Graph({ behaviorTree }: GraphProps): ReactElement {
+export function Graph({ behaviorTree, showPorts }: GraphProps): ReactElement {
   const {
     selectedElement,
     selectElement,
@@ -150,12 +196,13 @@ export function Graph({ behaviorTree }: GraphProps): ReactElement {
         nodeHeight: 70,
         nodeSep: 30,
         rankSep: 80,
+        showPorts,
       });
     } catch (error) {
       console.error("Failed to generate DAG:", error);
       return null;
     }
-  }, [behaviorTree]);
+  }, [behaviorTree, showPorts]);
 
   // Convert DAG to React Flow nodes
   const nodes = useMemo(() => {
