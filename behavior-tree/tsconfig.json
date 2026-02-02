@@ -2,6 +2,7 @@
   "extends": "create-foxglove-extension/tsconfig/tsconfig.json",
 
   "include": ["./src/**/*", "src/components"],
+  "exclude": ["./src/**/*.stories.tsx"],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
