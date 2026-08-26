@@ -14,7 +14,13 @@
 import { graphlib, layout } from "@dagrejs/dagre";
 
 import { NODE_HEIGHT, NODE_WIDTH } from "./constants";
-import { TBehaviorTree, TreeNode } from "./types";
+import { PortDirection, TBehaviorTree, TreeNode } from "./types";
+
+export interface ResolvedPort {
+  name: string;
+  direction: PortDirection;
+  value?: string;
+}
 
 export interface DagNode {
   id: string;
@@ -26,6 +32,7 @@ export interface DagNode {
   y?: number;
   attributes?: { [key: string]: string | number | boolean };
   selected?: boolean;
+  resolvedPorts?: ResolvedPort[];
 }
 
 export interface DagEdge {
@@ -46,6 +53,7 @@ export interface DagOptions {
   nodeSep?: number;
   edgeSep?: number;
   rankSep?: number;
+  showPorts?: boolean;
 }
 
 const DEFAULT_OPTIONS: Required<DagOptions> = {
@@ -55,6 +63,7 @@ const DEFAULT_OPTIONS: Required<DagOptions> = {
   nodeSep: 20,
   edgeSep: 10,
   rankSep: 50,
+  showPorts: false,
 };
 
 export function generateDag(behaviorTree: TBehaviorTree, options: DagOptions = {}): DagGraph {
@@ -73,16 +82,41 @@ export function generateDag(behaviorTree: TBehaviorTree, options: DagOptions = {
   const nodes: DagNode[] = [];
   const edges: DagEdge[] = [];
 
+  const PORT_ROW_HEIGHT = 16;
+  const PORT_SECTION_OVERHEAD = 10;
+  const SHOW_PORTS_NODE_WIDTH = 230;
+
   // Recursively process tree nodes
   function processNode(treeNode: TreeNode, parentId?: string): void {
-    // Calculate node dimensions based on model type
+    // Resolve ports from model definitions when showPorts is enabled
+    let resolvedPorts: ResolvedPort[] | undefined;
+    let nodeWidth = NODE_WIDTH;
+    let nodeHeight = NODE_HEIGHT;
+
+    if (opts.showPorts) {
+      const model = behaviorTree.models[treeNode.model];
+      if (model && model.ports.length > 0) {
+        resolvedPorts = model.ports.map((port) => ({
+          name: port.name,
+          direction: port.direction,
+          value:
+            treeNode.attributes?.[port.name] != null
+              ? String(treeNode.attributes[port.name])
+              : undefined,
+        }));
+        nodeWidth = SHOW_PORTS_NODE_WIDTH;
+        nodeHeight = NODE_HEIGHT + PORT_SECTION_OVERHEAD + resolvedPorts.length * PORT_ROW_HEIGHT;
+      }
+    }
+
     const dagNode: DagNode = {
       id: treeNode.id,
       name: treeNode.name,
       model: treeNode.model,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
+      width: nodeWidth,
+      height: nodeHeight,
       attributes: treeNode.attributes,
+      resolvedPorts,
     };
 
     nodes.push(dagNode);
@@ -90,8 +124,8 @@ export function generateDag(behaviorTree: TBehaviorTree, options: DagOptions = {
     // Add node to Dagre graph
     g.setNode(treeNode.id, {
       label: treeNode.name,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
+      width: nodeWidth,
+      height: nodeHeight,
     });
 
     // Add edge from parent if exists
