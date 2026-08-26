@@ -13,6 +13,8 @@
 // limitations under the License.
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
+import { NodeStatus } from "../types";
+
 export type SelectedElement = {
   id: string;
   name: string;
@@ -29,6 +31,8 @@ interface GraphContextValue {
   setSearchQuery: (query: string) => void;
   matchedNodeIds: Set<string>;
   setMatchedNodeIds: (ids: Set<string>) => void;
+  nodeStatusMap: Map<string, NodeStatus>;
+  setNodeStatusMap: (map: Map<string, NodeStatus>) => void;
 }
 
 const GraphContext = createContext<GraphContextValue | undefined>(undefined);
@@ -41,6 +45,7 @@ export function GraphContextProvider({ children }: GraphContextProviderProps) {
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [matchedNodeIds, setMatchedNodeIds] = useState<Set<string>>(new Set());
+  const [nodeStatusMap, setNodeStatusMap] = useState<Map<string, NodeStatus>>(new Map());
 
   const selectElement = useCallback((element: SelectedElement) => {
     setSelectedElement(element);
@@ -65,6 +70,8 @@ export function GraphContextProvider({ children }: GraphContextProviderProps) {
     setSearchQuery: updateSearchQuery,
     matchedNodeIds,
     setMatchedNodeIds,
+    nodeStatusMap,
+    setNodeStatusMap,
   };
 
   return <GraphContext.Provider value={value}>{children}</GraphContext.Provider>;

@@ -86,3 +86,51 @@ export const ComplexTree: Story = {
     xml: complexXmlData,
   },
 };
+
+// Story with mock BehaviorTreeLog data to test real-time status visualization
+export const WithLiveStatus: Story = {
+  args: {
+    xml: exampleXmlData.data,
+    logs: {
+      timestamp: { sec: 1000, nsec: 0 },
+      event_log: [
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "ReactiveSequence",
+          previous_status: "IDLE",
+          current_status: "RUNNING",
+        },
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "Fallback",
+          previous_status: "IDLE",
+          current_status: "SUCCESS",
+        },
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "IsTrue",
+          previous_status: "IDLE",
+          current_status: "SUCCESS",
+        },
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "SetBool",
+          previous_status: "RUNNING",
+          current_status: "FAILURE",
+        },
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "NavSatFixSubscriber",
+          previous_status: "IDLE",
+          current_status: "RUNNING",
+        },
+        {
+          timestamp: { sec: 1000, nsec: 0 },
+          node_name: "Sequence",
+          previous_status: "IDLE",
+          current_status: "SKIPPED",
+        },
+      ],
+    },
+  },
+};

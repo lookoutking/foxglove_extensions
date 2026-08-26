@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { NodeStatus } from "../types";
+
 export interface NodeColorScheme {
   nodeStyles: {
     default: string;
@@ -76,4 +78,63 @@ export function getNodeColor(modelType: string): NodeColorScheme {
     popupStyle: "bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-600",
     badgeColor: "lightgreen",
   };
+}
+
+export interface NodeStatusStyle {
+  borderColor: string;
+  ringClass: string;
+  animationClass: string;
+  edgeStroke: string;
+  edgeAnimated: boolean;
+  statusLabel: string;
+}
+
+export function getNodeStatusStyle(status: NodeStatus): NodeStatusStyle {
+  switch (status) {
+    case NodeStatus.IDLE:
+      return {
+        borderColor: "",
+        ringClass: "",
+        animationClass: "",
+        edgeStroke: "#6b7280",
+        edgeAnimated: false,
+        statusLabel: "IDLE",
+      };
+    case NodeStatus.RUNNING:
+      return {
+        borderColor: "#f59e0b",
+        ringClass: "ring-2 ring-amber-400/70 dark:ring-amber-500/70",
+        animationClass: "animate-pulse",
+        edgeStroke: "#f59e0b",
+        edgeAnimated: true,
+        statusLabel: "RUNNING",
+      };
+    case NodeStatus.SUCCESS:
+      return {
+        borderColor: "#22c55e",
+        ringClass: "ring-2 ring-green-400/70 dark:ring-green-500/70",
+        animationClass: "",
+        edgeStroke: "#22c55e",
+        edgeAnimated: false,
+        statusLabel: "SUCCESS",
+      };
+    case NodeStatus.FAILURE:
+      return {
+        borderColor: "#ef4444",
+        ringClass: "ring-2 ring-red-400/70 dark:ring-red-500/70",
+        animationClass: "",
+        edgeStroke: "#ef4444",
+        edgeAnimated: false,
+        statusLabel: "FAILURE",
+      };
+    case NodeStatus.SKIPPED:
+      return {
+        borderColor: "#9ca3af",
+        ringClass: "ring-1 ring-gray-400/50 dark:ring-gray-500/50",
+        animationClass: "opacity-60",
+        edgeStroke: "#9ca3af",
+        edgeAnimated: false,
+        statusLabel: "SKIPPED",
+      };
+  }
 }

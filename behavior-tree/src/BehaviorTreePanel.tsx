@@ -22,6 +22,7 @@ import { BehaviorTreeLog } from "./types";
 type PanelState = {
   behaviorTreeXmlTopic?: string;
   behaviorTreeLogsTopic?: string;
+  debug?: boolean;
 };
 
 const BEHAVIOR_TREE_XML_TOPIC_SCHEMA = "std_msgs/msg/String";
@@ -41,6 +42,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
   // );
   const [behaviorTreeXml, setBehaviorTreeXml] = useState<string | undefined>();
   const [behaviorTreeLogs, setBehaviorTreeLogs] = useState<BehaviorTreeLog | undefined>();
+  const [rawLogMessage, setRawLogMessage] = useState<unknown>(undefined);
 
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
 
@@ -129,6 +131,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
           const latestMessage = messages[messages.length - 1];
 
           if (latestMessage?.message) {
+            setRawLogMessage(latestMessage.message);
             let logData: BehaviorTreeLog | undefined;
 
             if (typeof latestMessage.message === "object") {
@@ -181,6 +184,10 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
         const newTopic = action.payload.value as string;
         setPanelState((prev) => ({ ...prev, behaviorTreeLogsTopic: newTopic }));
       }
+      if (action.action === "update" && path === "behaviorTreeTopics.debug") {
+        const newDebug = action.payload.value as boolean;
+        setPanelState((prev) => ({ ...prev, debug: newDebug }));
+      }
     };
 
     context.updatePanelSettingsEditor({
@@ -201,6 +208,11 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
               value: panelState.behaviorTreeLogsTopic ?? "",
               items: validBehaviorTreeLogsTopics,
             },
+            debug: {
+              label: "Show Debug Panel",
+              input: "boolean",
+              value: panelState.debug ?? false,
+            },
           },
         },
       },
@@ -209,6 +221,7 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
     context,
     panelState.behaviorTreeXmlTopic,
     panelState.behaviorTreeLogsTopic,
+    panelState.debug,
     validBehaviorTreeXmlTopics,
     validBehaviorTreeLogsTopics,
   ]);
@@ -226,7 +239,12 @@ function BehaviorTreePanel({ context }: { context: PanelExtensionContext }): Rea
   return (
     // There is a bug with Foxglove's `renderState.colorScheme` prop where it doesn't update properly.
     <div className="h-full w-full dark">
-      <BehaviorTree xml={behaviorTreeXml} logs={behaviorTreeLogs} />
+      <BehaviorTree
+        xml={behaviorTreeXml}
+        logs={behaviorTreeLogs}
+        debug={panelState.debug}
+        rawLogMessage={rawLogMessage}
+      />
     </div>
   );
 }
